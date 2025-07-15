@@ -1,0 +1,9 @@
+pinecone>=6.0.0              
+pinecone-text>=0.1.0           
+langchain>=0.0.242          
+langchain-core>=0.0.3          
+langchain-community>=0.0.1      
+langchain-google-genai>=2.1.4   
+fastapi
+uvicorn
+python-dotenv
