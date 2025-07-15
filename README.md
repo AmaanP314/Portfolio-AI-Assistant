@@ -1,6 +1,6 @@
 # Portfolio AI Assistant
 
-Developed a Retrieval-Augmented Generation (RAG) based chatbot. Its purpose is to answer questions about my professional background, projects, skills, and learning journey. The system uses a Pinecone vector database for efficient data retrieval and includes custom solutions to improve search and conversation flow.
+Developed an Agentic Retrieval-Augmented Generation (RAG) based chatbot designed to intelligently answer questions about my professional background, projects, skills, and learning journey. This system leverages a Pinecone vector database for efficient data retrieval and incorporates custom agentic solutions to dynamically improve search effectiveness and maintain a seamless conversational flow.
 
 ## Table of Contents
 
@@ -149,7 +149,7 @@ def markdown_to_text(markdown_str: str) -> str:
 plain_texts = [markdown_to_text(text) + ' \n\n' for text in texts]
 ```
 
-## Problems Faced and Solutions
+## Challenges and Solutions
 
 During the development of this RAG-based chatbot, several challenges were encountered related to data processing, search effectiveness, and maintaining conversation flow. Each problem was addressed with a specific solution to improve the chatbot's performance and reliability.
 
@@ -170,7 +170,7 @@ This section explains:
 
 ##### 🔹 Key Characteristics:
 
-  * **Fixed-size chunks** (efor example, 500 or 1000 tokens).
+  * **Fixed-size chunks** (for example, 500 or 1000 tokens).
   * **Standard overlap** between chunks (e.g., 200 tokens).
   * **No understanding of content structure** (paragraphs, headings, sections, etc.).
   * Content is split **only based on token length**, without considering its meaning.
@@ -367,6 +367,8 @@ To set up and run this project locally, follow these steps:
 
 ## Usage
 
+To chat with this chatbot, visit my [portfolio](https://amaanpoonawala.netlify.app/)
+
 The chatbot provides a `/chat` endpoint for interaction.
 
 **Endpoint:** `POST /chat`
@@ -385,7 +387,7 @@ The chatbot provides a `/chat` endpoint for interaction.
 ```python
 import requests
 
-url = "[http://127.0.0.1:8000/chat](http://127.0.0.1:8000/chat)"
+url = "http://127.0.0.1:8000/chat"
 payload = {
     "message": "Tell me about your YouTube Video Recommender project.",
     "session_id": "user_session_123"
@@ -394,3 +396,8 @@ payload = {
 response = requests.post(url, json=payload)
 print(response.json())
 ```
+
+## Contact
+Amaan Poonawala - [Portfolio](https://amaanpoonawala.netlify.app/) | [LinkedIn](https://www.linkedin.com/in/amaan-poonawala)
+
+Feel free to reach out for any questions or feedback.
