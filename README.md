@@ -87,68 +87,6 @@ This project is a web application designed to track and count bicep curls using 
 
 Before adding data to the Pinecone vector database, several preprocessing steps are applied to prepare the content for embedding and retrieval. The main goal is to convert the structured Markdown into plain text, as embedding models generally work better with plain text.
 
-Here is the code pipeline used for preprocessing:
-
-```python
-# Function to load markdown files with frontmatter
-def load_markdown(file_path):
-    post = frontmatter.load(file_path)
-    meta = post.metadata
-    body = post.content
-    return meta, body
-
-# Find markdown files in the current directory
-directory_path = os.getcwd()
-markdown_files = [f for f in os.listdir(directory_path) if f.endswith('.md')]
-
-chunks = []
-ids = []
-texts = []
-metadatas = []
-
-# Define headers for splitting markdown documents
-headers_to_split_on = [("#", "Header 1"), ("##", "Header 2")]
-header_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
-
-# Variable to store the previous chunk's last sentence for overlap
-previous_chunk_text = ""
-for file_path in markdown_files:
-    meta, body = load_markdown(file_path)
-    # Split the markdown body into chunks based on headers
-    chunk = header_splitter.split_text(body)
-    for i, c in enumerate(chunk):
-        chunk_id = f"{meta.get('id')}-{i+1}"
-
-        # Add headers into content before embedding to preserve context
-        header_context = ""
-        if 'Header 1' in c.metadata:
-            header_context += f"{c.metadata['Header 1']}\n"
-        if 'Header 2' in c.metadata:
-            header_context += f"{c.metadata['Header 2']}\n"
-
-        full_text = header_context + "\n" + c.page_content
-        if previous_chunk_text:
-            overlap_content = previous_chunk_text 
-            full_text = overlap_content + "\n" + full_text
-        # Store the current chunk text and metadata for the next chunk
-        previous_chunk_text = c.page_content.split("\n")[-1]
-
-        chunks.append(c)
-        texts.append(full_text)
-        metadatas.append({**meta, **c.metadata})
-        ids.append(chunk_id)
-
-# Function to convert markdown string to plain text
-def markdown_to_text(markdown_str: str) -> str:
-    # 1) Convert Markdown to HTML
-    html = md.markdown(markdown_str)
-    # 2) Remove HTML tags to get plain text
-    return BeautifulSoup(html, "html.parser").get_text(separator=" ")
-
-# Convert all chunk contents to plain text for optimal embedding
-plain_texts = [markdown_to_text(text) + ' \n\n' for text in texts]
-```
-
 ## Challenges and Solutions
 
 During the development of this RAG-based chatbot, several challenges were encountered related to data processing, search effectiveness, and maintaining conversation flow. Each problem was addressed with a specific solution to improve the chatbot's performance and reliability.
@@ -243,57 +181,6 @@ I developed a custom chunking method specifically for my personal documentation 
 **Problem:** The `PineconeHybridSearchRetriever` sometimes failed or returned no relevant documents if a query's exact words did not match any chunk during the sparse encoding phase. This led to unreliable search results, particularly for queries that were conceptually related but lacked direct keyword matches.
 
 **Solution:** A `CustomHybridSearchRetriever` was implemented, which extends the standard `PineconeHybridSearchRetriever`. This custom class includes a fallback system: if the initial hybrid search (which combines dense and sparse vectors) encounters an error related to sparse encoding (for example, "Sparse vector must contain at least one value"), it automatically switches to performing a dense-only search. This design ensures that even if a query does not have strong keyword matches, the system can still retrieve relevant documents based on semantic similarity.
-
-**Code Snippet (from `chatbot.py`):**
-
-```python
-class CustomHybridSearchRetriever(PineconeHybridSearchRetriever):
-    def _get_relevant_documents(
-        self, query: str, *, run_manager: Optional[CallbackManagerForRetrieverRun] = None
-    ) -> List[Document]:
-        """Get documents relevant to the query using hybrid search with fallback to dense-only."""
-        try:
-            # Attempt hybrid search initially
-            return super()._get_relevant_documents(query, run_manager=run_manager)
-        except Exception as e:
-            # If sparse encoding fails, switch to dense-only search
-            if "Sparse vector must contain at least one value" in str(e):
-                print("Falling back to dense-only search for query:", query)
-                # Generate dense embeddings
-                embedding = self.embeddings.embed_query(query)
-                # Perform search using only dense vectors
-                results = self.index.query(
-                    vector=embedding,
-                    top_k=self.top_k,
-                    include_metadata=True,
-                    namespace=self.namespace,
-                )
-                # Convert Pinecone results into LangChain Document objects
-                return self._process_pinecone_results(results)
-            else:
-                # Re-raise the exception if it is a different error
-                raise e
-    
-    def _process_pinecone_results(self, results):
-        """Process Pinecone results into Document objects."""
-        docs = []
-        for result in results.matches:
-            metadata = result.metadata or {}
-            # Create Document with page content and metadata
-            doc = Document(
-                page_content=metadata.pop("text", ""),
-                metadata=metadata,
-            )
-            docs.append(doc)
-        return docs
-    
-retriever = CustomHybridSearchRetriever( 
-        embeddings=embeddings, 
-        sparse_encoder=bm25_encoder, 
-        index=index,
-        top_k=3
-    )
-```
 
 ### Conversational Memory Management
 
@@ -398,6 +285,6 @@ print(response.json())
 ```
 
 ## Contact
-Amaan Poonawala - [Portfolio](https://amaanpoonawala.netlify.app/) | [LinkedIn](https://www.linkedin.com/in/amaan-poonawala)
+Amaan Poonawala - [Portfolio](https://amaanp.netlify.app/) | [LinkedIn](https://www.linkedin.com/in/amaan-poonawala)
 
 Feel free to reach out for any questions or feedback.
